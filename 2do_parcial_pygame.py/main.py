@@ -1,133 +1,205 @@
 import pygame
 import random
+import sys
 
-# Definiciones de las naves (en tamaño de casillas)
-naves = {
-    'submarino': 1,   # 4 submarinos de 1 casillero
-    'destructor': 2,   # 3 destructores de 2 casilleros
-    'crucero': 3,      # 2 cruceros de 3 casilleros
-    'acorazado': 4     # 1 acorazado de 4 casilleros
-}
 
-# Inicializar Pygame
 pygame.init()
 
-# Tamaño de la ventana y colores
-ANCHO = 500
-ALTO = 500
-TAMANIO_CELDA = 50  # tamaño de cada casilla
-TAMANIO_MATRIZ = 10  # tamaño de la matriz (10x10)
+
+ANCHO = 800
+ALTO = 600
+pantalla = pygame.display.set_mode((ANCHO, ALTO))
+pygame.display.set_caption("Batalla Naval")
+rectangulo_iniciar = [250, 140, 100, 50]
+rectangulo_puntos = [250, 200, 100, 50]
+rectangulo_salir =  [250, 260, 100, 50]
+
+
+#carga de imagenes
+imagen_oceano = pygame.image.load("C:/Users/anachi/Desktop/UTN/C1_2024.py/2do_parcial_pygame.py/imagenes/oceano.jpg")
+imagen_menu = pygame.image.load("C:/Users/anachi/Desktop/UTN/C1_2024.py/2do_parcial_pygame.py/imagenes/imagen_menu.jpg")
+imagen_icono = pygame.image.load("C:/Users/anachi/Desktop/UTN/C1_2024.py/2do_parcial_pygame.py/imagenes/imagen_icono.jpg")
+
+imagen_menu_agrandada = pygame.transform.scale(imagen_menu, (800, 600))
+
+#Icono del juego
+pygame.display.set_icon(imagen_icono)
+
+#Sonidos:
+# Fondo del menu:
+pygame.mixer.music.load("C:/Users/anachi/Desktop/UTN/C1_2024.py/2do_parcial_pygame.py/sonidos/sonido_menuu.wav")
+pygame.mixer.music.set_volume(0.5) # 0 - 1 -> 0.2 es el 20% del volumen
+pygame.mixer.music.play()
 
 # Colores
 BLANCO = (255, 255, 255)
-AZUL = (0, 0, 255)
 NEGRO = (0, 0, 0)
+AZUL = (0, 0, 255)
 ROJO = (255, 0, 0)
 VERDE = (0, 255, 0)
+GRIS = (169, 169, 169)
 
-# Crear la pantalla
-screen = pygame.display.set_mode((ANCHO, ALTO))
-pygame.display.set_caption('Batalla Naval')
+COLOR_BOTONES = (25, 72, 79)
 
-# Crear la matriz de juego (10x10)
-matriz = [['agua' for _ in range(TAMANIO_MATRIZ)] for _ in range(TAMANIO_MATRIZ)]
+# Tamaño de la grilla
+TAMANIO_CASILLA = 45
+FILAS = 10
+COLUMNAS = 10
 
-# Función para dibujar el tablero
-def dibujar_tablero():
-    screen.fill(BLANCO)
-    for i in range(TAMANIO_MATRIZ):
-        for j in range(TAMANIO_MATRIZ):
-            rect = pygame.Rect(j * TAMANIO_CELDA, i * TAMANIO_CELDA, TAMANIO_CELDA, TAMANIO_CELDA)
-            if matriz[i][j] == 'agua':
-                pygame.draw.rect(screen, AZUL, rect)
-            elif matriz[i][j] == 'barco':
-                pygame.draw.rect(screen, VERDE, rect)
-            elif matriz[i][j] == 'golpe':
-                pygame.draw.rect(screen, ROJO, rect)
-            pygame.draw.rect(screen, NEGRO, rect, 2)  # borde de la celda
-    pygame.display.update()
+# Tipos de barcos y tamaños
+barcos = {
+    "submarino": 1,  # 4 barcos de 1 casillero
+    "destructor": 2,  # 3 barcos de 2 casilleros
+    "crucero": 3,     # 2 barcos de 3 casilleros
+    "acorazado": 4    # 1 barco de 4 casilleros
+}
 
-# Función para generar una nave aleatoria
-# Función para colocar una nave de tamaño 'tamano' en la matriz
-def colocar_nave(tamano):
+
+def dibujar_grilla():
+    for fila in range(FILAS):
+        for col in range(COLUMNAS):
+            pygame.draw.rect(pantalla, NEGRO, (col * TAMANIO_CASILLA, fila * TAMANIO_CASILLA, TAMANIO_CASILLA, TAMANIO_CASILLA), 1)
+
+
+# Función para colocar un barco aleatoriamente en la grilla sin usar all()
+def colocar_barco(barco, longitud, matriz):
     colocado = False
     while not colocado:
-        # Elegir una orientación aleatoria (horizontal o vertical)
-        orientacion = random.choice(['horizontal', 'vertical'])
+        # Generar dirección aleatoria (horizontal o vertical)
+        direccion = random.choice(["horizontal", "vertical"])
+        # Seleccionar una posición inicial aleatoria
+        fila = random.randint(0, FILAS - 1)
+        col = random.randint(0, COLUMNAS - 1)
+
+        if direccion == "horizontal":
+            # Verificar que el barco no salga de los límites y que las celdas estén vacías
+            if col + longitud <= COLUMNAS:
+                ocupado = False
+                for i in range(longitud):
+                    if matriz[fila][col + i] != 0:  # Si alguna celda está ocupada, no se coloca el barco
+                        ocupado = True
+                        break
+                if not ocupado:
+                    for i in range(longitud):
+                        matriz[fila][col + i] = 1  # Marcar las celdas como ocupadas
+                    colocado = True
+        elif direccion == "vertical":
+            # Verificar que el barco no salga de los límites y que las celdas estén vacías
+            if fila + longitud <= FILAS:
+                ocupado = False
+                for i in range(longitud):
+                    if matriz[fila + i][col] != 0:  # Si alguna celda está ocupada, no se coloca el barco
+                        ocupado = True
+                        break
+                if not ocupado:
+                    for i in range(longitud):
+                        matriz[fila + i][col] = 1  # Marcar las celdas como ocupadas
+                    colocado = True
+
+    # Retornar las coordenadas de las celdas ocupadas por el barco
+    if direccion == "horizontal":
+        return [(fila, col + i) for i in range(longitud)]
+    else:  # direccion == "vertical"
+        return [(fila + i, col) for i in range(longitud)]
+
+
+def colocar_todos_los_barcos():
+    matriz = [[0] * COLUMNAS for _ in range(FILAS)]
+    barcos_colocados = {}
+    
+    # Colocar los barcos en la grilla
+    for barco, longitud in barcos.items():
+        for _ in range(4 - longitud if barco == "submarino" else 1):
+            celdas = colocar_barco(barco, longitud, matriz)
+            barcos_colocados[barco] = barcos_colocados.get(barco, []) + celdas
+    return barcos_colocados
+
+# Función para verificar si un disparo es un impacto
+def disparar(filas, columnas, barcos_colocados, puntaje):
+    for barco, celdas in barcos_colocados.items():
+        if (filas, columnas) in celdas:
+            puntaje += 5  # Impacto
+            celdas.remove((filas, columnas))
+            if len(celdas) == 0:
+                puntaje += 10 * barcos[barco]  # Hundir el barco
+            return puntaje, True
+    puntaje -= 1  # Agua
+    return puntaje, False
+
+# Función para dibujar la interfaz del juego
+def pantalla_juego(puntaje):
+    pantalla.fill(BLANCO)
+    dibujar_grilla()
+
+    # Mostrar puntaje
+    fuente = pygame.font.Font(None, 36)
+    texto_puntaje = fuente.render(f"Puntaje: {puntaje}", True, NEGRO)
+    pantalla.blit(texto_puntaje, (600, 50))
+    texto_salir = fuente.render(f"Salir", True, ROJO)
+    pantalla.blit(texto_salir, [600, 550])
+    pygame.display.flip()
+
+# Menú Principal con botones
+def menu_principal():
+    font = pygame.font.Font(None, 50)
+    texto_jugar = font.render("Jugar", True, NEGRO)
+    texto_puntajes = font.render("Ver Puntajes", True, NEGRO)
+    texto_salir = font.render("Salir", True, NEGRO)
+
+    # Coordenadas de los botones
+    jugar_rect = pygame.Rect(300, 150, 200, 50)
+    puntajes_rect = pygame.Rect(300, 250, 200, 50)
+    salir_rect = pygame.Rect(300, 350, 200, 50)
+
+    while True:
+        pantalla.fill(BLANCO)
+        pantalla.blit(imagen_menu_agrandada, (0, 0))
         
-        if orientacion == 'horizontal':
-            fila = random.randint(0, TAMANIO_MATRIZ - 1)
-            columna = random.randint(0, TAMANIO_MATRIZ - tamano)
-            
-            # Comprobar si las casillas están libres (sin usar 'all()')
-            espacio_libre = True
-            for i in range(tamano):
-                if matriz[fila][columna + i] != 'agua':  # Si hay alguna casilla ocupada
-                    espacio_libre = False
-                    break  # Romper el bucle si encontramos una casilla ocupada
-            
-            if espacio_libre:
-                # Colocar la nave
-                for i in range(tamano):
-                    matriz[fila][columna + i] = 'barco'
-                colocado = True  # Si todo está libre, se coloca la nave
+        
+        pygame.draw.rect(pantalla, VERDE, jugar_rect, width=5, border_radius=5)
+        pygame.draw.rect(pantalla, AZUL, puntajes_rect, width=5, border_radius=5)
+        pygame.draw.rect(pantalla, ROJO, salir_rect, width=5, border_radius=5)
 
-        else:  # Si es vertical
-            fila = random.randint(0, TAMANIO_MATRIZ - tamano)
-            columna = random.randint(0, TAMANIO_MATRIZ - 1)
-            
-            # Comprobar si las casillas están libres (sin usar 'all()')
-            espacio_libre = True
-            for i in range(tamano):
-                if matriz[fila + i][columna] != 'agua':  # Si hay alguna casilla ocupada
-                    espacio_libre = False
-                    break  # Romper el bucle si encontramos una casilla ocupada
-            
-            if espacio_libre:
-                # Colocar la nave
-                for i in range(tamano):
-                    matriz[fila + i][columna] = 'barco'
-                colocado = True  # Si todo está libre, se coloca la nave
+        pantalla.blit(texto_jugar, (jugar_rect.x + 50, jugar_rect.y + 10))
+        pantalla.blit(texto_puntajes, (puntajes_rect.x + 30, puntajes_rect.y + 10))
+        pantalla.blit(texto_salir, (salir_rect.x + 60, salir_rect.y + 10))
 
+        pygame.display.flip()
 
-# Función para colocar todas las naves
-def colocar_todas_las_naves():
-    # Colocar submarinos (4 barcos de 1 casillero)
-    for _ in range(4):
-        colocar_nave(1)
-    # Colocar destructores (3 barcos de 2 casilleros)
-    for _ in range(3):
-        colocar_nave(2)
-    # Colocar cruceros (2 barcos de 3 casilleros)
-    for _ in range(2):
-        colocar_nave(3)
-    # Colocar acorazado (1 barco de 4 casilleros)
-    colocar_nave(4)
+        # Verificar eventos
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if evento.type == pygame.MOUSEBUTTONDOWN:
+                if jugar_rect.collidepoint(evento.pos):
+                    return "jugar"
+                elif puntajes_rect.collidepoint(evento.pos):
+                    return "puntajes"
+                elif salir_rect.collidepoint(evento.pos):
+                    pygame.quit()
+                    sys.exit()
 
-# Función principal del juego
-def juego():
-    colocar_todas_las_naves()  # Colocamos las naves al inicio
-
-    # Bucle principal del juego
-    ejecutando = True
-    while ejecutando:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                ejecutando = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                # Obtener las coordenadas del click
-                x, y = event.pos
-                fila = y // TAMANIO_CELDA
-                columna = x // TAMANIO_CELDA
-                if matriz[fila][columna] == 'barco':
-                    matriz[fila][columna] = 'golpe'
-                elif matriz[fila][columna] == 'agua':
-                    matriz[fila][columna] = 'agua'
-
-        # Dibujar el tablero
-        dibujar_tablero()
-
-    pygame.quit()
+# Función principal
+def main():
+    puntaje = 0  # Definimos el puntaje aquí, fuera de la variable global
+    while True:
+        seleccion = menu_principal()
+        if seleccion == "jugar":
+            barcos_colocados = colocar_todos_los_barcos()
+            juego_en_curso = True
+            while juego_en_curso:
+                pantalla_juego(puntaje)
+                for evento in pygame.event.get():
+                    if evento.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+                    if evento.type == pygame.MOUSEBUTTONDOWN:
+                        fila = evento.pos[1] // TAMANIO_CASILLA
+                        columna = evento.pos[0] // TAMANIO_CASILLA
+                        puntaje, _ = disparar(fila, columna, barcos_colocados, puntaje)
+                        
+                pygame.display.flip()
 
 if __name__ == "__main__":
-    juego()
+    main()
