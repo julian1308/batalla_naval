@@ -104,14 +104,27 @@ def colocar_barco(barco, longitud, matriz):
 
 
 def colocar_todos_los_barcos():
-    matriz = [[0] * COLUMNAS for _ in range(FILAS)]
+    matriz = [[0] * COLUMNAS for _ in range(FILAS)]  # Matriz vacía de la grilla
     barcos_colocados = {}
+
+    # Definir explícitamente la cantidad de barcos a colocar
+    cantidad_barcos = {
+        "submarino": 4,    # Colocamos 4 submarinos
+        "destructor": 3,   # Colocamos 3 destructores
+        "crucero": 2,      # Colocamos 2 cruceros
+        "acorazado": 1     # Colocamos 1 acorazado
+    }
     
     # Colocar los barcos en la grilla
-    for barco, longitud in barcos.items():
-        for _ in range(4 - longitud if barco == "submarino" else 1):
-            celdas = colocar_barco(barco, longitud, matriz)
-            barcos_colocados[barco] = barcos_colocados.get(barco, []) + celdas
+    for barco, cantidad in cantidad_barcos.items():
+        for _ in range(cantidad):  # Colocamos el número de barcos según lo indicado
+            longitud = barcos[barco]  # Obtener la longitud del barco
+            celdas = colocar_barco(barco, longitud, matriz)  # Colocar un barco
+            if barco in barcos_colocados:
+                barcos_colocados[barco].extend(celdas)  # Añadir las celdas ocupadas por el barco
+            else:
+                barcos_colocados[barco] = celdas  # Si el barco no está en el diccionario, añadirlo
+
     return barcos_colocados
 
 # Función para verificar si un disparo es un impacto
