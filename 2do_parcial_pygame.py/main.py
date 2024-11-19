@@ -5,31 +5,38 @@ import sys
 
 pygame.init()
 
-
+#tamaño de pantalla
 ANCHO = 800
 ALTO = 600
 pantalla = pygame.display.set_mode((ANCHO, ALTO))
+
+#Nombre del juego
 pygame.display.set_caption("Batalla Naval")
+
+
 rectangulo_iniciar = [250, 140, 100, 50]
 rectangulo_puntos = [250, 200, 100, 50]
 rectangulo_salir =  [250, 260, 100, 50]
 
 
 #carga de imagenes
-imagen_oceano = pygame.image.load("C:/Users/anachi/Desktop/UTN/C1_2024.py/2do_parcial_pygame.py/imagenes/oceano.jpg")
-imagen_menu = pygame.image.load("C:/Users/anachi/Desktop/UTN/C1_2024.py/2do_parcial_pygame.py/imagenes/imagen_menu.jpg")
-imagen_icono = pygame.image.load("C:/Users/anachi/Desktop/UTN/C1_2024.py/2do_parcial_pygame.py/imagenes/imagen_icono.jpg")
+imagen_oceano = pygame.image.load("2do_parcial_pygame.py/imagenes/oceano.jpg")
+imagen_menu = pygame.image.load("2do_parcial_pygame.py/imagenes/imagen_menu.jpg")
+imagen_icono = pygame.image.load("2do_parcial_pygame.py/imagenes/imagen_icono.jpg")
 
 imagen_menu_agrandada = pygame.transform.scale(imagen_menu, (800, 600))
+imagen_oceano_agrandada = pygame.transform.scale(imagen_oceano, (800, 600))
 
 #Icono del juego
 pygame.display.set_icon(imagen_icono)
 
 #Sonidos:
 # Fondo del menu:
-pygame.mixer.music.load("C:/Users/anachi/Desktop/UTN/C1_2024.py/2do_parcial_pygame.py/sonidos/sonido_menuu.wav")
+pygame.mixer.music.load("2do_parcial_pygame.py/sonidos/sonido_menuu.wav")
 pygame.mixer.music.set_volume(0.5) # 0 - 1 -> 0.2 es el 20% del volumen
-pygame.mixer.music.play()
+pygame.mixer.music.play(-1, 0.0)
+
+sonido_botones = pygame.mixer.Sound("2do_parcial_pygame.py\sonidos\sonido_boton.wav")
 
 # Colores
 BLANCO = (255, 255, 255)
@@ -38,7 +45,6 @@ AZUL = (0, 0, 255)
 ROJO = (255, 0, 0)
 VERDE = (0, 255, 0)
 GRIS = (169, 169, 169)
-
 COLOR_BOTONES = (25, 72, 79)
 
 # Tamaño de la grilla
@@ -54,11 +60,18 @@ barcos = {
     "acorazado": 4    # 1 barco de 4 casilleros
 }
 
+#lista de puntos
+lista_puntajes = []
 
 def dibujar_grilla():
+    x_inicial = (ANCHO - COLUMNAS * TAMANIO_CASILLA) // 2
+    y_inicial = (ALTO - FILAS * TAMANIO_CASILLA) // 2
+
     for fila in range(FILAS):
         for col in range(COLUMNAS):
-            pygame.draw.rect(pantalla, NEGRO, (col * TAMANIO_CASILLA, fila * TAMANIO_CASILLA, TAMANIO_CASILLA, TAMANIO_CASILLA), 1)
+            x = x_inicial + col * TAMANIO_CASILLA
+            y = y_inicial + fila * TAMANIO_CASILLA
+            pygame.draw.rect(pantalla, NEGRO, (x, y, TAMANIO_CASILLA, TAMANIO_CASILLA), 1)
 
 
 # Función para colocar un barco aleatoriamente en la grilla sin usar all()
@@ -142,6 +155,7 @@ def disparar(filas, columnas, barcos_colocados, puntaje):
 # Función para dibujar la interfaz del juego
 def pantalla_juego(puntaje):
     pantalla.fill(BLANCO)
+    pantalla.blit(imagen_oceano_agrandada, (0, 0))
     dibujar_grilla()
 
     # Mostrar puntaje
@@ -160,22 +174,26 @@ def menu_principal():
     texto_salir = font.render("Salir", True, NEGRO)
 
     # Coordenadas de los botones
-    jugar_rect = pygame.Rect(300, 150, 200, 50)
-    puntajes_rect = pygame.Rect(300, 250, 200, 50)
-    salir_rect = pygame.Rect(300, 350, 200, 50)
+    jugar_rect = pygame.Rect(300, 150, 250, 50)
+    puntajes_rect = pygame.Rect(300, 250, 250, 50)
+    salir_rect = pygame.Rect(300, 350, 250, 50)
+
+
+
+
 
     while True:
         pantalla.fill(BLANCO)
         pantalla.blit(imagen_menu_agrandada, (0, 0))
         
         
-        pygame.draw.rect(pantalla, VERDE, jugar_rect, width=5, border_radius=5)
-        pygame.draw.rect(pantalla, AZUL, puntajes_rect, width=5, border_radius=5)
-        pygame.draw.rect(pantalla, ROJO, salir_rect, width=5, border_radius=5)
+        pygame.draw.rect(pantalla, COLOR_BOTONES, jugar_rect, width=0, border_radius=5)
+        pygame.draw.rect(pantalla, COLOR_BOTONES, puntajes_rect, width=0, border_radius=5)
+        pygame.draw.rect(pantalla, COLOR_BOTONES, salir_rect, width=0, border_radius=5)
 
-        pantalla.blit(texto_jugar, (jugar_rect.x + 50, jugar_rect.y + 10))
-        pantalla.blit(texto_puntajes, (puntajes_rect.x + 30, puntajes_rect.y + 10))
-        pantalla.blit(texto_salir, (salir_rect.x + 60, salir_rect.y + 10))
+        pantalla.blit(texto_jugar, (jugar_rect.x + 70, jugar_rect.y + 10))
+        pantalla.blit(texto_puntajes, (puntajes_rect.x + 20, puntajes_rect.y + 10))
+        pantalla.blit(texto_salir, (salir_rect.x + 80, salir_rect.y + 10))
 
         pygame.display.flip()
 
@@ -185,6 +203,7 @@ def menu_principal():
                 pygame.quit()
                 sys.exit()
             if evento.type == pygame.MOUSEBUTTONDOWN:
+                sonido_botones.play()
                 if jugar_rect.collidepoint(evento.pos):
                     return "jugar"
                 elif puntajes_rect.collidepoint(evento.pos):
@@ -211,7 +230,7 @@ def main():
                         fila = evento.pos[1] // TAMANIO_CASILLA
                         columna = evento.pos[0] // TAMANIO_CASILLA
                         puntaje, _ = disparar(fila, columna, barcos_colocados, puntaje)
-                        
+        elif seleccion == "puntajes":
                 pygame.display.flip()
 
 if __name__ == "__main__":
