@@ -36,7 +36,7 @@ pygame.mixer.music.load("2do_parcial_pygame.py/sonidos/sonido_menuu.wav")
 pygame.mixer.music.set_volume(0.5) # 0 - 1 -> 0.2 es el 20% del volumen
 pygame.mixer.music.play(-1, 0.0)
 
-sonido_botones = pygame.mixer.Sound("2do_parcial_pygame.py\sonidos\sonido_boton.wav")
+sonido_botones = pygame.mixer.Sound("2do_parcial_pygame.py/sonidos/sonido_boton.wav")
 
 # Colores
 BLANCO = (255, 255, 255)
